@@ -1,0 +1,40 @@
+
+:root{
+  --bg:#eef2f7;
+  --card:#fff;
+  --green:#28a745;
+  --gray:#777;
+  --blue:#007bff;
+  --delete:#c62828;
+}
+*{box-sizing:border-box}
+body{font-family:system-ui,Arial,sans-serif;background:var(--bg);margin:0;padding:18px;display:flex;justify-content:center}
+.container{width:100%;max-width:720px}
+h1{text-align:center;margin:0 0 14px 0}
+.card{background:var(--card);padding:16px;border-radius:12px;margin-bottom:14px;box-shadow:0 6px 18px rgba(0,0,0,0.04)}
+.row{display:flex;gap:10px;margin-top:10px}
+button{flex:1;padding:10px;border-radius:10px;border:0;font-size:15px;cursor:pointer}
+.green{background:var(--green);color:#fff}
+.gray{background:var(--gray);color:#fff}
+.blue{background:var(--blue);color:#fff}
+.delete{background:var(--delete);color:#fff}
+input{width:100%;padding:10px;border-radius:8px;border:1px solid #ccc;margin-top:6px}
+.toggle{cursor:pointer}
+#groupsList.collapsed{display:none}
+.group-item{padding:10px;border:1px solid #eee;border-radius:8px;margin-bottom:8px;background:#fafafa}
+.group-controls{display:flex;gap:8px;margin-top:8px}
+.small-btn{padding:6px 8px;border-radius:8px;border:0;cursor:pointer;font-size:13px}
+.small-open{background:#007bff;color:#fff}
+.small-edit{background:#6c757d;color:#fff}
+.small-delete{background:#c62828;color:#fff}
+
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;padding:20px;z-index:9999}
+.hidden{display:none}
+.modal-card{background:#fff;padding:16px;border-radius:12px;max-width:720px;width:100%;max-height:90vh;overflow:auto}
+.progress-bar{background:#e0e0e0;height:10px;border-radius:8px;margin-bottom:8px}
+#progressInner{height:100%;width:0%;background:var(--green);border-radius:8px}
+.word-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px;border-bottom:1px solid #f0f0f0}
+.word-text{flex:1}
+.word-actions{display:flex;gap:8px}
+.stage-badge{background:#f1f5f9;padding:4px 8px;border-radius:8px;font-size:13px}
+.small-muted{font-size:13px;color:#666}
