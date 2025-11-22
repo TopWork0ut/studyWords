@@ -1,70 +1,70 @@
 <!DOCTYPE html>
 <html lang="uk">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Vocabulary Trainer</title>
-<link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <div class="container">
-    <h1>Vocabulary Trainer</h1>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Vocabulary Trainer</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Vocabulary Trainer</h1>
 
-    <div class="card stats-card">
-      <h2>Статистика</h2>
-      <div id="statsBox">Завантаження...</div>
-      <div class="row">
-        <button id="startSRS" class="green">Почати повторення</button>
-        <button id="startFree" class="gray">Повторити ще раз</button>
+      <div class="card stats-card">
+        <h2>Статистика</h2>
+        <div id="statsBox">Завантаження...</div>
+        <div class="row">
+          <button id="startSRS" class="green">Почати повторення</button>
+          <button id="startFree" class="gray">Повторити ще раз</button>
+        </div>
+      </div>
+
+      <div class="card groups-card">
+        <h2 class="toggle" id="toggleGroupsBtn">Групи ▼</h2>
+        <div id="groupsList" class="collapsed"></div>
+        <div class="row">
+          <button id="openCreate" class="green">Додати нову групу</button>
+        </div>
       </div>
     </div>
 
-    <div class="card groups-card">
-      <h2 class="toggle" id="toggleGroupsBtn">Групи ▼</h2>
-      <div id="groupsList" class="collapsed"></div>
-      <div class="row">
-        <button id="openCreate" class="green">Додати нову групу</button>
+    <!-- Create / Edit Group Modal -->
+    <div id="groupModal" class="overlay hidden">
+      <div class="modal-card">
+        <h2 id="modalTitle">Нова група</h2>
+
+        <label>Назва групи</label>
+        <input id="groupNameInput" placeholder="Назва групи" />
+
+        <h3>Слова</h3>
+        <div id="groupWordsList"></div>
+
+        <div class="row">
+          <button id="addWordBtn" class="blue">Додати слово</button>
+          <button id="repeatGroupBtn" class="green">Повторити групу</button>
+          <button id="saveGroupBtn" class="green">Зберегти</button>
+          <button id="closeGroupModal" class="gray">Закрити</button>
+        </div>
+
+        <div style="margin-top: 12px">
+          <button id="deleteGroupBtn" class="delete">Видалити групу</button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Create / Edit Group Modal -->
-  <div id="groupModal" class="overlay hidden">
-    <div class="modal-card">
-      <h2 id="modalTitle">Нова група</h2>
-      <button id="repeatGroupBtn" class="green">Повторити групу</button>
+    <!-- Review Modal -->
+    <div id="reviewModal" class="overlay hidden">
+      <div class="modal-card">
+        <h2 id="reviewTitle">Повторення</h2>
+        <div class="progress-bar"><div id="progressInner"></div></div>
+        <div id="reviewContent"></div>
 
-      <label>Назва групи</label>
-      <input id="groupNameInput" placeholder="Назва групи" />
-
-      <h3>Слова</h3>
-      <div id="groupWordsList"></div>
-
-      <div class="row">
-        <button id="addWordBtn" class="blue">Додати слово</button>
-        <button id="saveGroupBtn" class="green">Зберегти</button>
-        <button id="closeGroupModal" class="gray">Закрити</button>
-      </div>
-
-      <div style="margin-top:12px;">
-        <button id="deleteGroupBtn" class="delete">Видалити групу</button>
+        <div class="row">
+          <button id="closeReviewBtn" class="gray">Закрити</button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Review Modal -->
-  <div id="reviewModal" class="overlay hidden">
-    <div class="modal-card">
-      <h2 id="reviewTitle">Повторення</h2>
-      <div class="progress-bar"><div id="progressInner"></div></div>
-      <div id="reviewContent"></div>
-
-      <div class="row">
-        <button id="closeReviewBtn" class="gray">Закрити</button>
-      </div>
-    </div>
-  </div>
-
-<script src="script.js"></script>
-</body>
+    <script src="script.js"></script>
+  </body>
 </html>
