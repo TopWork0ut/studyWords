@@ -167,3 +167,78 @@ input {
   font-size: 13px;
   color: #666;
 }
+
+/* --- responsive fixes for group list (mobile) --- */
+/* ensure the main inner row adapts and left column can shrink */
+.group-item > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+/* left column (name + count) can shrink properly */
+.group-item > div > div:first-child {
+  flex: 1 1 auto;
+  min-width: 0; /* allow flex children to shrink */
+}
+
+/* make group name truncate if too long */
+.group-item > div > div:first-child b {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* keep count readable and allow wrapping beneath name on small widths */
+.group-item > div > div:first-child .small-muted {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #666;
+}
+
+/* buttons: allow wrapping and smaller padding so they fit */
+.group-controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 0;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* smaller buttons, won't stretch the whole row on mobile */
+.group-controls .small-btn {
+  padding: 6px 8px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* On narrow screens stack info and controls */
+@media (max-width: 480px) {
+  .group-item > div {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .group-controls {
+    justify-content: flex-end;
+  }
+  .group-controls .small-btn {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+  .word-row {
+    gap: 6px;
+  }
+}
+
+/* very small phones: make controls wrap to next line and align right */
+@media (max-width: 360px) {
+  .group-controls {
+    justify-content: flex-end;
+  }
+  .group-item > div > div:first-child b {
+    font-size: 15px;
+  }
+}

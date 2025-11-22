@@ -27,41 +27,75 @@ let currentEditGroupId = null;
 let currentReviewQueue = [];
 let reviewMode = "srs"; // 'srs' or 'free' or 'group-force'
 let reviewGroupId = null;
+let groupSortMode = "date_desc"; // 'none' | 'date_asc' | 'date_desc'
 
-function save() {
-  localStorage.setItem("vocabData", JSON.stringify(data));
-  renderGroups();
-  updateStats();
-}
+// DOM елементи (якщо сторінка не має #statsBox — створимо фолбек, інші покажемо в консолі)
+const statsBox =
+  document.getElementById("statsBox") ||
+  (() => {
+    const el = document.createElement("div");
+    el.id = "statsBox";
+    el.style.padding = "8px";
+    document.body.prepend(el);
+    console.warn(
+      "Created fallback #statsBox — краще додати відповідний елемент у HTML"
+    );
+    return el;
+  })();
 
-// DOM refs
-const statsBox = document.getElementById("statsBox");
+const groupsList = document.getElementById("groupsList");
 const startSRS = document.getElementById("startSRS");
 const startFree = document.getElementById("startFree");
 const toggleGroupsBtn = document.getElementById("toggleGroupsBtn");
-const groupsList = document.getElementById("groupsList");
 const openCreate = document.getElementById("openCreate");
-
-const groupModal = document.getElementById("groupModal");
-const groupNameInput = document.getElementById("groupNameInput");
-const groupWordsList = document.getElementById("groupWordsList");
 const addWordBtn = document.getElementById("addWordBtn");
 const saveGroupBtn = document.getElementById("saveGroupBtn");
 const closeGroupModal = document.getElementById("closeGroupModal");
 const deleteGroupBtn = document.getElementById("deleteGroupBtn");
-
+const groupNameInput = document.getElementById("groupNameInput");
+const groupWordsList = document.getElementById("groupWordsList");
+const modalTitle = document.getElementById("modalTitle");
 const reviewModal = document.getElementById("reviewModal");
 const reviewContent = document.getElementById("reviewContent");
 const closeReviewBtn = document.getElementById("closeReviewBtn");
 const repeatGroupBtn = document.getElementById("repeatGroupBtn");
 const progressInner = document.getElementById("progressInner");
 
+// логування відсутніх елементів (щоб швидко знайти, що в HTML бракує)
+[
+  "groupsList",
+  "startSRS",
+  "startFree",
+  "toggleGroupsBtn",
+  "openCreate",
+  "addWordBtn",
+  "saveGroupBtn",
+  "closeGroupModal",
+  "deleteGroupBtn",
+  "groupNameInput",
+  "groupWordsList",
+  "modalTitle",
+  "reviewModal",
+  "reviewContent",
+  "closeReviewBtn",
+  "repeatGroupBtn",
+  "progressInner",
+].forEach((id) => {
+  if (!document.getElementById(id)) console.warn("Missing element in DOM:", id);
+});
+
 // add export/import UI to controls area (appends buttons to statsBox)
 (function createExportImportUI() {
   const container = document.createElement("div");
   container.style.marginTop = "10px";
   container.innerHTML = `
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <label style="font-size:13px">Сортування груп:</label>
+      <select id="groupSortSelect" style="padding:6px">
+        <option value="none">Без сортування</option>
+        <option value="date_asc">За датою: старіші → новіші</option>
+        <option value="date_desc">За датою: новіші → старіші</option>
+      </select>
       <button id="startRandomBtn" class="small-btn">Перевірити випадково</button>
       <button id="exportAllBtn" class="small-btn">Експорт усіх груп (.zip)</button>
       <button id="importBtn" class="small-btn">Імпорт (.zip/.json)</button>
@@ -69,6 +103,14 @@ const progressInner = document.getElementById("progressInner");
     </div>
   `;
   statsBox.appendChild(container);
+
+  const sortSelect = document.getElementById("groupSortSelect");
+  // set initial select from current mode
+  sortSelect.value = groupSortMode || "none";
+  sortSelect.onchange = () => {
+    groupSortMode = sortSelect.value;
+    renderGroups();
+  };
 
   document.getElementById("startRandomBtn").onclick = () => {
     reviewMode = "random";
@@ -144,13 +186,60 @@ repeatGroupBtn.addEventListener("click", () => {
 // functions
 
 function renderGroups() {
+  // очищаємо і додаємо хедер із контролом сортування (сортування ліворуч)
   groupsList.innerHTML = "";
+
+  // header з контролом сортування (сортування ліворуч)
+  const header = document.createElement("div");
+  header.style.display = "flex";
+  header.style.justifyContent = "space-between";
+  header.style.alignItems = "center";
+  header.style.marginBottom = "8px";
+  header.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px">
+      <label style="font-size:13px;margin-right:4px">Сортування:</label>
+      <select id="groupSortSelectInline" style="padding:6px">
+        <option value="none">Без сортування</option>
+        <option value="date_asc">за датою старіші</option>
+        <option value="date_desc">за датою новіші</option>
+      </select>
+    </div>
+    <div></div>
+  `;
+  groupsList.appendChild(header);
+
+  const sortSelect = document.getElementById("groupSortSelectInline");
+  sortSelect.value = groupSortMode || "none";
+  sortSelect.onchange = () => {
+    groupSortMode = sortSelect.value;
+    renderGroups();
+  };
+
   if (data.groups.length === 0) {
-    groupsList.innerHTML =
-      '<div class="small-muted">Немає груп. Додайте нову групу.</div>';
+    const empty = document.createElement("div");
+    empty.className = "small-muted";
+    empty.textContent = "Немає груп. Додайте нову групу.";
+    groupsList.appendChild(empty);
     return;
   }
-  data.groups.forEach((g) => {
+
+  // create a copy and sort according to groupSortMode
+  const groupsCopy = data.groups.slice();
+  if (groupSortMode === "date_asc") {
+    groupsCopy.sort((a, b) => {
+      const ta = a.createdAt || a.id || 0;
+      const tb = b.createdAt || b.id || 0;
+      return ta - tb;
+    });
+  } else if (groupSortMode === "date_desc") {
+    groupsCopy.sort((a, b) => {
+      const ta = a.createdAt || a.id || 0;
+      const tb = b.createdAt || b.id || 0;
+      return tb - ta;
+    });
+  }
+
+  groupsCopy.forEach((g) => {
     const div = document.createElement("div");
     div.className = "group-item";
     div.innerHTML = `
@@ -194,6 +283,7 @@ function renderGroups() {
       if (confirm("Видалити групу?")) {
         data.groups = data.groups.filter((x) => x.id !== id);
         save();
+        renderGroups();
       }
     };
   });
@@ -337,6 +427,7 @@ function addWordToModal() {
       id: tempId,
       name: groupNameInput.value || "Нова група",
       words: [],
+      createdAt: Date.now(),
     });
     currentEditGroupId = tempId;
   }
@@ -385,11 +476,17 @@ function saveGroupFromModal() {
   if (currentEditGroupId == null) {
     // new group
     const newId = Date.now();
-    data.groups.push({ id: newId, name: name, words: [] });
+    data.groups.push({
+      id: newId,
+      name: name,
+      words: [],
+      createdAt: Date.now(),
+    });
     currentEditGroupId = newId;
   } else {
     const g = data.groups.find((x) => x.id === currentEditGroupId);
     g.name = name;
+    if (!g.createdAt) g.createdAt = Date.now();
   }
   save();
   closeGroupModalFunc();
@@ -730,6 +827,7 @@ function importGroupObject(g) {
     id: newGroupId,
     name: g.name,
     words: [],
+    createdAt: typeof g.createdAt === "number" ? g.createdAt : Date.now(),
   };
   if (Array.isArray(g.words)) {
     g.words.forEach((w) => {
