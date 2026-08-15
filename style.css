@@ -1,14 +1,14 @@
-:root {
+ :root {
   --bg: #eef2f7;
   --card: #fff;
   --green: #28a745;
   --gray: #777;
   --blue: #007bff;
   --delete: #c62828;
+  --orange: #f59e0b;
+  --red: #dc3545;
 }
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 body {
   font-family: system-ui, Arial, sans-serif;
   background: var(--bg);
@@ -17,26 +17,16 @@ body {
   display: flex;
   justify-content: center;
 }
-.container {
-  width: 100%;
-  max-width: 720px;
-}
-h1 {
-  text-align: center;
-  margin: 0 0 14px 0;
-}
+.container { width: 100%; max-width: 720px; }
+h1 { text-align: center; margin: 0 0 14px 0; }
 .card {
   background: var(--card);
   padding: 16px;
   border-radius: 12px;
   margin-bottom: 14px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 6px 18px rgba(0,0,0,.04);
 }
-.row {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-}
+.row { display: flex; gap: 10px; margin-top: 10px; }
 button {
   flex: 1;
   padding: 10px;
@@ -45,35 +35,26 @@ button {
   font-size: 15px;
   cursor: pointer;
 }
-.green {
-  background: var(--green);
-  color: #fff;
-}
-.gray {
-  background: var(--gray);
-  color: #fff;
-}
-.blue {
-  background: var(--blue);
-  color: #fff;
-}
-.delete {
-  background: var(--delete);
-  color: #fff;
-}
-input {
+button:disabled { opacity: .5; cursor: default; }
+.green { background: var(--green); color: #fff; }
+.gray { background: var(--gray); color: #fff; }
+.blue { background: var(--blue); color: #fff; }
+.delete { background: var(--delete); color: #fff; }
+.orange { background: var(--orange); color: #fff; }
+.red { background: var(--red); color: #fff; }
+
+input, textarea, select {
   width: 100%;
   padding: 10px;
   border-radius: 8px;
   border: 1px solid #ccc;
   margin-top: 6px;
+  font: inherit;
 }
-.toggle {
-  cursor: pointer;
-}
-#groupsList.collapsed {
-  display: none;
-}
+textarea { min-height: 70px; resize: vertical; }
+
+.toggle { cursor: pointer; }
+#groupsList.collapsed { display: none; }
 .group-item {
   padding: 10px;
   border: 1px solid #eee;
@@ -85,6 +66,8 @@ input {
   display: flex;
   gap: 8px;
   margin-top: 8px;
+  flex-wrap: wrap;
+  align-items: center;
 }
 .small-btn {
   padding: 6px 8px;
@@ -92,33 +75,23 @@ input {
   border: 0;
   cursor: pointer;
   font-size: 13px;
+  flex: 0 0 auto;
 }
-.small-open {
-  background: #007bff;
-  color: #fff;
-}
-.small-edit {
-  background: #6c757d;
-  color: #fff;
-}
-.small-delete {
-  background: #c62828;
-  color: #fff;
-}
+.small-open { background: #007bff; color: #fff; }
+.small-edit { background: #6c757d; color: #fff; }
+.small-delete { background: #c62828; color: #fff; }
 
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(0,0,0,.45);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
   z-index: 9999;
 }
-.hidden {
-  display: none;
-}
+.hidden { display: none; }
 .modal-card {
   background: #fff;
   padding: 16px;
@@ -132,7 +105,7 @@ input {
   background: #e0e0e0;
   height: 10px;
   border-radius: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 #progressInner {
   height: 100%;
@@ -149,96 +122,66 @@ input {
   padding: 8px;
   border-bottom: 1px solid #f0f0f0;
 }
-.word-text {
-  flex: 1;
-}
-.word-actions {
-  display: flex;
-  gap: 8px;
-}
-
+.word-text { flex: 1; min-width: 0; }
+.word-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .stage-badge {
   background: #f1f5f9;
   padding: 4px 8px;
   border-radius: 8px;
   font-size: 13px;
 }
-.small-muted {
-  font-size: 13px;
-  color: #666;
-}
+.small-muted { font-size: 13px; color: #666; }
 
-/* --- responsive fixes for group list (mobile) --- */
-/* ensure the main inner row adapts and left column can shrink */
-.group-item > div {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.review-prompt {
+  font-size: 23px;
+  line-height: 1.35;
+  margin: 14px 0 8px;
+  font-weight: 700;
+}
+.review-type {
+  display: inline-block;
+  background: #eef6ff;
+  color: #1769aa;
+  padding: 5px 9px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+.review-context {
+  background: #f8fafc;
+  border-left: 4px solid #94a3b8;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 18px;
+  line-height: 1.5;
+  margin: 12px 0;
+}
+.hint-box {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  padding: 10px;
+  border-radius: 8px;
+  margin-top: 10px;
+}
+.result-box {
+  padding: 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+  margin-top: 12px;
+}
+.rating-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
+  margin-top: 12px;
 }
+.rating-row button { padding: 9px 5px; }
+.rating-label { font-size: 12px; opacity: .9; display:block; margin-top:2px; }
 
-/* left column (name + count) can shrink properly */
-.group-item > div > div:first-child {
-  flex: 1 1 auto;
-  min-width: 0; /* allow flex children to shrink */
-}
-
-/* make group name truncate if too long */
-.group-item > div > div:first-child b {
-  display: block;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* keep count readable and allow wrapping beneath name on small widths */
-.group-item > div > div:first-child .small-muted {
-  margin-top: 4px;
-  font-size: 13px;
-  color: #666;
-}
-
-/* buttons: allow wrapping and smaller padding so they fit */
-.group-controls {
-  display: flex;
-  gap: 8px;
-  margin-top: 0;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-/* smaller buttons, won't stretch the whole row on mobile */
-.group-controls .small-btn {
-  padding: 6px 8px;
-  font-size: 13px;
-  white-space: nowrap;
-}
-
-/* On narrow screens stack info and controls */
 @media (max-width: 480px) {
-  .group-item > div {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-  }
-  .group-controls {
-    justify-content: flex-end;
-  }
-  .group-controls .small-btn {
-    padding: 6px 8px;
-    font-size: 12px;
-  }
-  .word-row {
-    gap: 6px;
-  }
-}
-
-/* very small phones: make controls wrap to next line and align right */
-@media (max-width: 360px) {
-  .group-controls {
-    justify-content: flex-end;
-  }
-  .group-item > div > div:first-child b {
-    font-size: 15px;
-  }
+  .row { flex-wrap: wrap; }
+  .rating-row { grid-template-columns: repeat(2, 1fr); }
+  .review-prompt { font-size: 21px; }
+  .review-context { font-size: 16px; }
+  .word-row { align-items: flex-start; }
 }
