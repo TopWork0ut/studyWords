@@ -255,7 +255,7 @@ function openReview() {
     alert(
       reviewMode === "srs"
         ? "Немає слів для повторення. Усі слова зараз мають майбутній час повторення."
-        : "Немає слів для повторення.",
+        : "Немає слів для повторення."
     );
 
     return;
@@ -382,7 +382,7 @@ function renderNextReview() {
   else if (type === "context_to_word" && context.trim()) {
     const contextDisplay = escapeHtml(context).replace(
       new RegExp(escapeRegExp(term), "gi"),
-      "_____",
+      "_____"
     );
 
     promptHtml = `
@@ -420,7 +420,7 @@ function renderNextReview() {
 
   const pct = Math.min(
     100,
-    Math.round((done / Math.max(reviewTotal, 1)) * 100),
+    Math.round((done / Math.max(reviewTotal, 1)) * 100)
   );
 
   progressInner.style.width = pct + "%";
@@ -446,7 +446,7 @@ function renderNextReview() {
       Поточний інтервал:
       <b>
         ${escapeHtml(
-          INTERVAL_NAMES[origWord.intervalIndex] || INTERVAL_NAMES[0],
+          INTERVAL_NAMES[origWord.intervalIndex] || INTERVAL_NAMES[0]
         )}
       </b>
     </div>
@@ -683,6 +683,184 @@ function renderNextReview() {
       </div>
     `;
 
+    // ==========================================================
+    // INLINE WORD EDITING DURING REVIEW
+    // ==========================================================
+
+    const editWordBtn = document.createElement("button");
+
+    editWordBtn.id = "editWordDuringReviewBtn";
+    editWordBtn.className = "gray";
+    editWordBtn.style.marginTop = "12px";
+    editWordBtn.textContent = "Редагувати слово";
+
+    reviewContent.appendChild(editWordBtn);
+
+    editWordBtn.onclick = () => {
+      const editBox = document.createElement("div");
+
+      editBox.style.marginTop = "12px";
+      editBox.style.padding = "14px";
+      editBox.style.border = "1px solid #ddd";
+      editBox.style.borderRadius = "10px";
+      editBox.style.background = "#fafafa";
+
+      editBox.innerHTML = `
+    <div style="font-weight:700;margin-bottom:10px">
+      Редагування слова
+    </div>
+
+    <label>
+      Англійське слово
+    </label>
+
+    <input
+      id="reviewEditTerm"
+      value="${escapeHtml(origWord.term || "")}"
+      autocomplete="off"
+    />
+
+    <label
+      style="
+        display:block;
+        margin-top:10px;
+      "
+    >
+      Значення / переклад
+    </label>
+
+    <input
+      id="reviewEditDefinition"
+      value="${escapeHtml(origWord.definition || "")}"
+    />
+
+    <label
+      style="
+        display:block;
+        margin-top:10px;
+      "
+    >
+      Речення / ситуація
+    </label>
+
+    <textarea
+      id="reviewEditContext"
+      style="
+        width:100%;
+        min-height:80px;
+        padding:10px;
+        border-radius:8px;
+        border:1px solid #ccc;
+        margin-top:6px;
+        font:inherit;
+        resize:vertical;
+      "
+      placeholder="Наприклад: He looked at me with contempt."
+    >${escapeHtml(origWord.context || "")}</textarea>
+
+    <label
+      style="
+        display:block;
+        margin-top:10px;
+      "
+    >
+      Асоціація / гачок пам'яті
+    </label>
+
+    <textarea
+      id="reviewEditAssociation"
+      style="
+        width:100%;
+        min-height:80px;
+        padding:10px;
+        border-radius:8px;
+        border:1px solid #ccc;
+        margin-top:6px;
+        font:inherit;
+        resize:vertical;
+      "
+      placeholder="Твоя особиста асоціація"
+    >${escapeHtml(origWord.association || "")}</textarea>
+
+    <div
+      style="
+        display:flex;
+        gap:8px;
+        margin-top:12px;
+      "
+    >
+
+      <button
+        id="saveReviewWord"
+        class="green"
+      >
+        💾 Зберегти
+      </button>
+
+      <button
+        id="cancelReviewWord"
+        class="gray"
+      >
+        Скасувати
+      </button>
+
+    </div>
+  `;
+
+      reviewContent.appendChild(editBox);
+
+      document.getElementById("saveReviewWord").onclick = () => {
+        const newTerm = document.getElementById("reviewEditTerm").value.trim();
+
+        const newDefinition = document
+          .getElementById("reviewEditDefinition")
+          .value.trim();
+
+        const newContext = document
+          .getElementById("reviewEditContext")
+          .value.trim();
+
+        const newAssociation = document
+          .getElementById("reviewEditAssociation")
+          .value.trim();
+
+        if (!newTerm) {
+          alert("Введи англійське слово.");
+          return;
+        }
+
+        if (!newDefinition) {
+          alert("Введи значення / переклад.");
+          return;
+        }
+
+        // Оновлюємо саме те слово,
+        // яке зараз повторюється
+        origWord.term = newTerm;
+        origWord.definition = newDefinition;
+        origWord.context = newContext;
+        origWord.association = newAssociation;
+
+        save();
+
+        // Після збереження залишаємося
+        // на цьому ж слові.
+        //
+        // Просто перемальовуємо результат
+        // з уже оновленими даними.
+
+        showResult("", false);
+      };
+
+      document.getElementById("cancelReviewWord").onclick = () => {
+        editBox.remove();
+      };
+    };
+
+    // ==========================================================
+    // SRS RATING
+    // ==========================================================
+
     const rate = (rating) => {
       applyRating(origWord, rating);
 
@@ -829,7 +1007,7 @@ function renderGroups() {
           Немає груп.
           Додайте нову групу.
         </div>
-      `,
+      `
     );
 
     return;
@@ -839,17 +1017,17 @@ function renderGroups() {
 
   if (groupSortMode === "date_asc") {
     groupsCopy.sort(
-      (a, b) => (a.createdAt || a.id || 0) - (b.createdAt || b.id || 0),
+      (a, b) => (a.createdAt || a.id || 0) - (b.createdAt || b.id || 0)
     );
   } else if (groupSortMode === "date_desc") {
     groupsCopy.sort(
-      (a, b) => (b.createdAt || b.id || 0) - (a.createdAt || a.id || 0),
+      (a, b) => (b.createdAt || b.id || 0) - (a.createdAt || a.id || 0)
     );
   }
 
   groupsCopy.forEach((g) => {
     const due = (g.words || []).filter(
-      (w) => Date.now() >= (w.nextReview || 0),
+      (w) => Date.now() >= (w.nextReview || 0)
     ).length;
 
     const div = document.createElement("div");
@@ -982,7 +1160,7 @@ function updateStats() {
     (g.words || []).forEach((w) => {
       const idx = Math.max(
         0,
-        Math.min(INTERVALS.length - 1, Number(w.intervalIndex) || 0),
+        Math.min(INTERVALS.length - 1, Number(w.intervalIndex) || 0)
       );
 
       stageCounts[idx]++;
@@ -1058,7 +1236,7 @@ function updateStats() {
               ${INTERVAL_NAMES[i]}:
               ${c}
             </div>
-          `,
+          `
       )
       .join("")}
 
@@ -1776,7 +1954,7 @@ function fuzzyMatch(a, b) {
       {
         length: m + 1,
       },
-      () => new Array(n + 1),
+      () => new Array(n + 1)
     );
 
     for (let i = 0; i <= m; i++) {
@@ -1796,7 +1974,7 @@ function fuzzyMatch(a, b) {
 
           d[i][j - 1] + 1,
 
-          d[i - 1][j - 1] + cost,
+          d[i - 1][j - 1] + cost
         );
       }
     }
@@ -1865,7 +2043,7 @@ function exportGroupZip(groupId) {
       zip.file(
         `${sanitizeFilename(g.name || "group")}_${g.id}.json`,
 
-        JSON.stringify(g, null, 2),
+        JSON.stringify(g, null, 2)
       );
 
       zip
@@ -1876,7 +2054,7 @@ function exportGroupZip(groupId) {
           downloadBlob(
             content,
 
-            `${sanitizeFilename(g.name || "group")}_${g.id}.zip`,
+            `${sanitizeFilename(g.name || "group")}_${g.id}.zip`
           );
         });
     } else {
@@ -1885,7 +2063,7 @@ function exportGroupZip(groupId) {
           type: "application/json",
         }),
 
-        `${sanitizeFilename(g.name || "group")}_${g.id}.json`,
+        `${sanitizeFilename(g.name || "group")}_${g.id}.json`
       );
     }
   });
@@ -1906,7 +2084,7 @@ function exportAllGroupsZip() {
         zip.file(
           `${sanitizeFilename(g.name || "group")}_${g.id}.json`,
 
-          JSON.stringify(g, null, 2),
+          JSON.stringify(g, null, 2)
         );
       });
 
@@ -1918,7 +2096,7 @@ function exportAllGroupsZip() {
           downloadBlob(
             content,
 
-            `vocab_groups_${Date.now()}.zip`,
+            `vocab_groups_${Date.now()}.zip`
           );
         });
     } else {
@@ -1930,16 +2108,16 @@ function exportAllGroupsZip() {
                 groups: data.groups,
               },
               null,
-              2,
+              2
             ),
           ],
 
           {
             type: "application/json",
-          },
+          }
         ),
 
-        `vocab_groups_${Date.now()}.json`,
+        `vocab_groups_${Date.now()}.json`
       );
     }
   });
@@ -1970,8 +2148,8 @@ function handleImportFile(file) {
                 .then((txt) => ({
                   fn,
                   txt,
-                })),
-            ),
+                }))
+            )
           ).then((arr) => {
             arr.forEach((f) => {
               try {
