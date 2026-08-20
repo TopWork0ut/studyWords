@@ -49,6 +49,361 @@ let reviewGroupId = null;
 let groupSortMode = "date_desc";
 let reviewTotal = 0;
 
+// ============================================================
+// REVIEW HISTORY
+// ============================================================
+
+// Максимум останніх 200 унікальних слів
+const REVIEW_HISTORY_LIMIT = 200;
+
+if (!Array.isArray(data.reviewHistory)) {
+  data.reviewHistory = [];
+}
+
+function addToReviewHistory(word, rating) {
+  if (!word) return;
+
+  const now = Date.now();
+
+  // Прибираємо старий запис цього слова,
+  // щоб воно не дублювалося.
+  data.reviewHistory = data.reviewHistory.filter(
+    (item) => item.wordId !== word.id,
+  );
+
+  // Найновіше слово завжди зверху
+  data.reviewHistory.unshift({
+    wordId: word.id,
+    groupId: word.groupId,
+    reviewedAt: now,
+    lastRating: rating || "",
+  });
+
+  // Залишаємо максимум 200 слів
+  if (data.reviewHistory.length > REVIEW_HISTORY_LIMIT) {
+    data.reviewHistory = data.reviewHistory.slice(0, REVIEW_HISTORY_LIMIT);
+  }
+}
+
+function cleanupReviewHistory() {
+  if (!Array.isArray(data.reviewHistory)) {
+    data.reviewHistory = [];
+    return;
+  }
+
+  // Якщо слово або групу видалили,
+  // прибираємо їх також з історії.
+  data.reviewHistory = data.reviewHistory.filter((item) => {
+    const group = data.groups.find((g) => g.id === item.groupId);
+
+    if (!group) return false;
+
+    return (group.words || []).some((word) => word.id === item.wordId);
+  });
+}
+
+function getHistoryWord(item) {
+  const group = data.groups.find((g) => g.id === item.groupId);
+
+  if (!group) return null;
+
+  return (group.words || []).find((word) => word.id === item.wordId) || null;
+}
+
+function formatHistoryDate(timestamp) {
+  if (!timestamp) return "";
+
+  const date = new Date(timestamp);
+
+  return date.toLocaleDateString("uk-UA", {
+    day: "2-digit",
+    month: "2-digit",
+  });
+}
+
+// ============================================================
+// HISTORY MODAL
+// ============================================================
+
+function ensureHistoryModal() {
+  let modal = document.getElementById("historyModal");
+
+  if (modal) {
+    return modal;
+  }
+
+  modal = document.createElement("div");
+
+  modal.id = "historyModal";
+  modal.className = "overlay hidden";
+
+  modal.innerHTML = `
+    <div class="modal-card">
+
+      <div
+        style="
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          gap:10px;
+        "
+      >
+
+        <h2 style="margin:0">
+          Історія повторень
+        </h2>
+
+        <button
+          id="closeHistoryBtn"
+          class="gray small-btn"
+          style="flex:0 0 auto"
+        >
+          Закрити
+        </button>
+
+      </div>
+
+      <div
+        class="small-muted"
+        style="margin-top:8px"
+      >
+        Подивись на українське значення
+        і спробуй сам згадати англійське слово.
+        Якщо не пам'ятаєш — поверни його
+        на 10 хв у SRS.
+      </div>
+
+      <div
+        id="historyList"
+        style="margin-top:14px"
+      ></div>
+
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  document.getElementById("closeHistoryBtn").onclick = () => {
+    modal.classList.add("hidden");
+  };
+
+  // Закриття при натисканні поза вікном
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) {
+      modal.classList.add("hidden");
+    }
+  });
+
+  return modal;
+}
+
+// ============================================================
+// OPEN HISTORY
+// ============================================================
+
+function openReviewHistory() {
+  cleanupReviewHistory();
+
+  const modal = ensureHistoryModal();
+
+  const list = modal.querySelector("#historyList");
+
+  if (!data.reviewHistory.length) {
+    list.innerHTML = `
+      <div class="small-muted">
+        Історія поки порожня.
+        Вона почне наповнюватися
+        після повторень.
+      </div>
+    `;
+
+    modal.classList.remove("hidden");
+
+    return;
+  }
+
+  list.innerHTML = data.reviewHistory
+    .map((item) => {
+      const word = getHistoryWord(item);
+
+      if (!word) {
+        return "";
+      }
+
+      return `
+        <div
+          class="history-item"
+          data-history-word-id="${word.id}"
+          style="
+            padding:12px 0;
+            border-bottom:1px solid #eee;
+          "
+        >
+
+          <!-- Показуємо насамперед українське значення -->
+
+          <div
+            style="
+              font-size:17px;
+              font-weight:650;
+              line-height:1.35;
+            "
+          >
+            ${escapeHtml(word.definition)}
+          </div>
+
+          <div
+            class="small-muted"
+            style="margin-top:4px"
+          >
+            ${formatHistoryDate(item.reviewedAt)}
+
+            ${item.lastRating ? ` · ${escapeHtml(item.lastRating)}` : ""}
+          </div>
+
+
+          <!-- Англійське слово спочатку приховане -->
+
+          <div
+            class="history-answer hidden"
+            style="
+              margin-top:8px;
+              padding:9px;
+              background:#f8fafc;
+              border-radius:8px;
+            "
+          >
+
+            <b>
+              ${escapeHtml(word.term)}
+            </b>
+
+            ${
+              word.context
+                ? `
+                  <div
+                    class="small-muted"
+                    style="margin-top:4px"
+                  >
+                    ${escapeHtml(word.context)}
+                  </div>
+                `
+                : ""
+            }
+
+          </div>
+
+
+          <div
+            style="
+              display:flex;
+              gap:8px;
+              flex-wrap:wrap;
+              margin-top:8px;
+            "
+          >
+
+            <button
+              class="
+                small-btn
+                small-open
+                history-show
+              "
+              data-id="${word.id}"
+              style="flex:0 0 auto"
+            >
+              Показати слово
+            </button>
+
+            <button
+              class="
+                small-btn
+                small-delete
+                history-forgot
+              "
+              data-id="${word.id}"
+              style="flex:0 0 auto"
+            >
+              Не пам'ятаю
+            </button>
+
+          </div>
+
+        </div>
+      `;
+    })
+    .join("");
+
+  // ==========================================================
+  // SHOW / HIDE ANSWER
+  // ==========================================================
+
+  list.querySelectorAll(".history-show").forEach((button) => {
+    button.onclick = () => {
+      const row = button.closest(".history-item");
+
+      const answer = row.querySelector(".history-answer");
+
+      answer.classList.toggle("hidden");
+
+      button.textContent = answer.classList.contains("hidden")
+        ? "Показати слово"
+        : "Сховати слово";
+    };
+  });
+
+  // ==========================================================
+  // FORGOT WORD
+  // ==========================================================
+
+  list.querySelectorAll(".history-forgot").forEach((button) => {
+    button.onclick = () => {
+      const wordId = Number(button.dataset.id);
+
+      let targetWord = null;
+
+      for (const group of data.groups) {
+        const found = (group.words || []).find((word) => word.id === wordId);
+
+        if (found) {
+          targetWord = found;
+          break;
+        }
+      }
+
+      if (!targetWord) {
+        return;
+      }
+
+      // ================================================
+      // ПОВЕРТАЄМО СЛОВО НА 10 ХВ
+      // ================================================
+
+      targetWord.intervalIndex = 0;
+
+      targetWord.nextReview = Date.now() + INTERVALS[0];
+
+      targetWord.lastReviewed = Date.now();
+
+      save();
+
+      // Одразу показуємо правильне слово
+
+      const row = button.closest(".history-item");
+
+      const answer = row.querySelector(".history-answer");
+
+      answer.classList.remove("hidden");
+
+      button.textContent = "Повернено на 10 хв ✓";
+
+      button.disabled = true;
+    };
+  });
+
+  modal.classList.remove("hidden");
+}
+
 const statsBox = document.getElementById("statsBox");
 const groupsList = document.getElementById("groupsList");
 const startSRS = document.getElementById("startSRS");
@@ -255,7 +610,7 @@ function openReview() {
     alert(
       reviewMode === "srs"
         ? "Немає слів для повторення. Усі слова зараз мають майбутній час повторення."
-        : "Немає слів для повторення."
+        : "Немає слів для повторення.",
     );
 
     return;
@@ -382,7 +737,7 @@ function renderNextReview() {
   else if (type === "context_to_word" && context.trim()) {
     const contextDisplay = escapeHtml(context).replace(
       new RegExp(escapeRegExp(term), "gi"),
-      "_____"
+      "_____",
     );
 
     promptHtml = `
@@ -420,7 +775,7 @@ function renderNextReview() {
 
   const pct = Math.min(
     100,
-    Math.round((done / Math.max(reviewTotal, 1)) * 100)
+    Math.round((done / Math.max(reviewTotal, 1)) * 100),
   );
 
   progressInner.style.width = pct + "%";
@@ -446,7 +801,7 @@ function renderNextReview() {
       Поточний інтервал:
       <b>
         ${escapeHtml(
-          INTERVAL_NAMES[origWord.intervalIndex] || INTERVAL_NAMES[0]
+          INTERVAL_NAMES[origWord.intervalIndex] || INTERVAL_NAMES[0],
         )}
       </b>
     </div>
@@ -862,6 +1217,8 @@ function renderNextReview() {
     // ==========================================================
 
     const rate = (rating) => {
+      addToReviewHistory(origWord, rating);
+
       applyRating(origWord, rating);
 
       renderNextReview();
@@ -1007,7 +1364,7 @@ function renderGroups() {
           Немає груп.
           Додайте нову групу.
         </div>
-      `
+      `,
     );
 
     return;
@@ -1017,17 +1374,17 @@ function renderGroups() {
 
   if (groupSortMode === "date_asc") {
     groupsCopy.sort(
-      (a, b) => (a.createdAt || a.id || 0) - (b.createdAt || b.id || 0)
+      (a, b) => (a.createdAt || a.id || 0) - (b.createdAt || b.id || 0),
     );
   } else if (groupSortMode === "date_desc") {
     groupsCopy.sort(
-      (a, b) => (b.createdAt || b.id || 0) - (a.createdAt || a.id || 0)
+      (a, b) => (b.createdAt || b.id || 0) - (a.createdAt || a.id || 0),
     );
   }
 
   groupsCopy.forEach((g) => {
     const due = (g.words || []).filter(
-      (w) => Date.now() >= (w.nextReview || 0)
+      (w) => Date.now() >= (w.nextReview || 0),
     ).length;
 
     const div = document.createElement("div");
@@ -1160,7 +1517,7 @@ function updateStats() {
     (g.words || []).forEach((w) => {
       const idx = Math.max(
         0,
-        Math.min(INTERVALS.length - 1, Number(w.intervalIndex) || 0)
+        Math.min(INTERVALS.length - 1, Number(w.intervalIndex) || 0),
       );
 
       stageCounts[idx]++;
@@ -1236,7 +1593,7 @@ function updateStats() {
               ${INTERVAL_NAMES[i]}:
               ${c}
             </div>
-          `
+          `,
       )
       .join("")}
 
@@ -1954,7 +2311,7 @@ function fuzzyMatch(a, b) {
       {
         length: m + 1,
       },
-      () => new Array(n + 1)
+      () => new Array(n + 1),
     );
 
     for (let i = 0; i <= m; i++) {
@@ -1974,7 +2331,7 @@ function fuzzyMatch(a, b) {
 
           d[i][j - 1] + 1,
 
-          d[i - 1][j - 1] + cost
+          d[i - 1][j - 1] + cost,
         );
       }
     }
@@ -2043,7 +2400,7 @@ function exportGroupZip(groupId) {
       zip.file(
         `${sanitizeFilename(g.name || "group")}_${g.id}.json`,
 
-        JSON.stringify(g, null, 2)
+        JSON.stringify(g, null, 2),
       );
 
       zip
@@ -2054,7 +2411,7 @@ function exportGroupZip(groupId) {
           downloadBlob(
             content,
 
-            `${sanitizeFilename(g.name || "group")}_${g.id}.zip`
+            `${sanitizeFilename(g.name || "group")}_${g.id}.zip`,
           );
         });
     } else {
@@ -2063,7 +2420,7 @@ function exportGroupZip(groupId) {
           type: "application/json",
         }),
 
-        `${sanitizeFilename(g.name || "group")}_${g.id}.json`
+        `${sanitizeFilename(g.name || "group")}_${g.id}.json`,
       );
     }
   });
@@ -2084,7 +2441,7 @@ function exportAllGroupsZip() {
         zip.file(
           `${sanitizeFilename(g.name || "group")}_${g.id}.json`,
 
-          JSON.stringify(g, null, 2)
+          JSON.stringify(g, null, 2),
         );
       });
 
@@ -2096,7 +2453,7 @@ function exportAllGroupsZip() {
           downloadBlob(
             content,
 
-            `vocab_groups_${Date.now()}.zip`
+            `vocab_groups_${Date.now()}.zip`,
           );
         });
     } else {
@@ -2108,16 +2465,16 @@ function exportAllGroupsZip() {
                 groups: data.groups,
               },
               null,
-              2
+              2,
             ),
           ],
 
           {
             type: "application/json",
-          }
+          },
         ),
 
-        `vocab_groups_${Date.now()}.json`
+        `vocab_groups_${Date.now()}.json`,
       );
     }
   });
@@ -2148,8 +2505,8 @@ function handleImportFile(file) {
                 .then((txt) => ({
                   fn,
                   txt,
-                }))
-            )
+                })),
+            ),
           ).then((arr) => {
             arr.forEach((f) => {
               try {
@@ -2279,6 +2636,26 @@ function sanitizeFilename(name) {
     .replace(/[\/\\?%*:|"<>]/g, "_")
 
     .replace(/\s+/g, "_");
+}
+
+// ============================================================
+// HISTORY BUTTON
+// ============================================================
+
+const historyBtn = document.createElement("button");
+
+historyBtn.id = "openHistoryBtn";
+historyBtn.className = "blue";
+historyBtn.textContent = "Історія повторень";
+
+historyBtn.onclick = () => {
+  openReviewHistory();
+};
+
+// Шукаємо ряд кнопок біля "Почати повторення"
+
+if (startFree && startFree.parentElement) {
+  startFree.parentElement.appendChild(historyBtn);
 }
 
 // ============================================================
